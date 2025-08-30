@@ -11,3 +11,4 @@ export const loginSchema = z.object({
         "password must contian a capital letter, a small letter and a number",
     }),
 });
+

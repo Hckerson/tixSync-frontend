@@ -12,5 +12,6 @@ export const signupSchema = z.object({
       message:
         "password must contian a capital letter, a small letter and a number",
     }),
+  checked: z.boolean()
 });
   

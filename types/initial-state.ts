@@ -1,9 +1,10 @@
+// types/initial-state.ts
 export interface State {
-  errors: {
+  errors?: {
     email?: string[];
+    password?: string[];
     firstName?: string[];
     lastName?: string[];
-    password?: string[];
   };
-  message: string | null;
+  message?: string | null; // Changed from `string | null` to `string | undefined`
 }
