@@ -1,12 +1,23 @@
 "use client";
+import * as z from "zod";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
+import { gql } from "@apollo/client";
 import { CSpinner } from "@coreui/react";
-import signup from "@/server/signup/signup";
+import { SignupDto } from "@/types/login";
+import { useEffect, useState } from "react";
+import { State } from "@/types/initial-state";
+import { signupSchema } from "@/schema/signupSchema";
+import { useMutation, useQuery } from "@apollo/client/react";
+import { CreateAudienceInput } from "@/lib/generated/graphql";
 
 export default function Signup() {
+  const [pending, setPending] = useState<boolean>(false);
+  const [errors, setError] = useState<State>({
+    errors: {},
+    message: null,
+  });
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -14,7 +25,7 @@ export default function Signup() {
     password: "",
     checkbox: false,
   });
-  const [pending, setPending] = useState<boolean>(false);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, checked } = e.target;
     setFormData((prev) => {
@@ -25,20 +36,45 @@ export default function Signup() {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLButtonElement>) => {
+  function validate(formdata: SignupDto) {
+    const validatedFields = signupSchema.safeParse(formdata);
+    console.log(validatedFields.success);
+    if (!validatedFields.success) {
+      setError({
+        errors: validatedFields.error.flatten().fieldErrors,
+        message: "",
+      });
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        checkbox: false,
+      });
+    }
+    console.log(errors.errors);
+  }
+  const handleSubmit = async () => {
     try {
-      const response = await signup(formData);
-      if(response){
-        setPending(false)
-      }
+      validate(formData);
     } catch (error) {
       console.error(`Error fetching locations: ${error}`);
     }
   };
 
-  useEffect(()=>{
-    console.log(formData)
-  },[formData])
+  const [mutate, { data, loading, error }] = useMutation(gql`
+    mutation CreateAudience($createAudienceInput:${CreateAudienceInput}) {
+      createAudience(){
+          email: "Kers.jnr@gmailaudienceDto:.com"
+          fullname: "Kers"
+          password: "12345678"
+          role: AUDIENCE
+          username: "Lee"
+        }
+    }
+  `); 
+
+  useEffect(() => {}, [formData, pending]);
   return (
     <main className="h-screen box-border relative ">
       <div className="grid gap-x-2 lg:grid-cols-2 grid-cols-1 bg-[#322C40] h-full">
@@ -126,6 +162,15 @@ export default function Signup() {
                   </span>
                 </div>
               </div>
+              <div className="flex flex-col space-y-1">
+                {errors.errors?.password?.map((error, idx) => {
+                  return (
+                    <span className="text-[#beb0db] text-sm" key={idx}>
+                      {error}
+                    </span>
+                  );
+                })}
+              </div>
             </form>
 
             <div className="box-border ">
@@ -135,7 +180,7 @@ export default function Signup() {
                   onClick={(e) => {
                     e.preventDefault();
                     setPending(true);
-                    handleSubmit(e);
+                    handleSubmit();
                   }}
                   className="bg-purple-600/70 w-full rounded-lg p-3 outline-offset-3"
                 >

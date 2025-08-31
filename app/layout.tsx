@@ -1,29 +1,28 @@
-import './globals.css'
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import { Providers } from '@/components/providers'
-import { Toaster } from '@/components/ui/sonner'
+'use client'
+import "./globals.css";
+import { Inter } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
+import { Providers } from "@/components/providers";
+import { ApolloProvider } from "@apollo/client/react";
+import { client } from "@/server/setup/apollo/config";
 
-const inter = Inter({ subsets: ['latin'] })
-
-export const metadata: Metadata = {
-  title: 'TixSync - Event Ticketing Platform',
-  description: 'Discover, reserve, and buy tickets for amazing events',
-}
+const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Providers>
-          {children}
-          <Toaster />
-        </Providers>
+        <ApolloProvider client={client}>
+          <Providers>
+            {children}
+            <Toaster />
+          </Providers>
+        </ApolloProvider>
       </body>
     </html>
-  )
+  );
 }

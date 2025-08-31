@@ -6,7 +6,6 @@ import { client } from "../setup/apollo/config";
 import { signupSchema } from "@/schema/signupSchema";
 
 export default async function signup(formdata: SignupDto) {
-  console.log(formdata)
   const validatedFields = signupSchema.safeParse(formdata);
   if (!validatedFields.success) {
     return {
@@ -14,31 +13,40 @@ export default async function signup(formdata: SignupDto) {
       message: "",
     };
   }
-  const {firstName, lastName, email, password, checked} = validatedFields.data
-  try {
-    const response = await client.query({
-      query: gql`
-        mutation CreateAudience {
-          createAudience(
-            createAudienceInput: {
-              email: ${email}
-              fullname: ${firstName} ${lastName}
-              password: ${password}
-              role: AUDIENCE
-              username: ${firstName}
-            }
-          ) {
-            fullname
-            id
-            role
-            userId
-            username
-          }
+
+  const { firstName, lastName, email, password, checkbox } =
+    validatedFields.data;
+
+  return {
+    query: gql`
+      query GetLocations {
+        locations {
+          id
+          name
+          description
+          photo
         }
-      `,
-    });
-    return response;
-  } catch (error) {
-    console.error(`Error loggin in user`);
-  }
+      }
+    `,
+  };
 }
+
+// mutation: gql`
+// mutation CreateAudience {
+//   createAudience(
+//     createAudienceInput: {
+//       email: ${email}
+//       fullname: ${firstName} ${lastName}
+//       password: ${password}
+//       role: AUDIENCE
+//       username: ${email}
+//     }
+//   ) {
+//     fullname
+//     id
+//     role
+//     userId
+//     username
+//   }
+// }
+// `,
