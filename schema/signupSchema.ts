@@ -12,6 +12,6 @@ export const signupSchema = z.object({
       message:
         "password must contian a capital letter, a small letter and a number",
     }),
-  checkbox: z.boolean({})
+  checkbox: z.literal(true, {message:"You must agree to the terms and conditions"}),
 });
   

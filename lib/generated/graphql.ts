@@ -550,6 +550,7 @@ export enum Role {
   Organizer = 'ORGANIZER'
 }
 
+
 export type Seat = {
   __typename?: 'Seat';
   column?: Maybe<Scalars['String']['output']>;

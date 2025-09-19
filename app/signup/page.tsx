@@ -4,10 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { Check } from "lucide-react";
 import { gql } from "@apollo/client";
-import { CSpinner } from "@coreui/react";
 import { SignupDto } from "@/types/login";
 import { useEffect, useState } from "react";
 import { State } from "@/types/initial-state";
+import { Role } from "@/lib/generated/graphql";
+import Spinner from "react-bootstrap/Spinner";
 import { signupSchema } from "@/schema/signupSchema";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { CreateAudienceInput } from "@/lib/generated/graphql";
@@ -38,7 +39,6 @@ export default function Signup() {
 
   function validate(formdata: SignupDto) {
     const validatedFields = signupSchema.safeParse(formdata);
-    console.log(validatedFields.success);
     if (!validatedFields.success) {
       setError({
         errors: validatedFields.error.flatten().fieldErrors,
@@ -51,30 +51,47 @@ export default function Signup() {
         password: "",
         checkbox: false,
       });
+      return "failed";
     }
-    console.log(errors.errors);
+    return "success";
   }
+
+  const [mutate, { data, loading, error }] = useMutation(gql`
+    mutation CreateAudience($createAudienceInput: CreateAudienceInput!) {
+      createAudience(createAudienceInput: $createAudienceInput) {
+        fullname
+        id
+        role
+        userId
+        username
+      }
+    }
+  `);
+
   const handleSubmit = async () => {
     try {
-      validate(formData);
+      const response = validate(formData);
+      if (response != "success") return;
+      const variables: { createAudienceInput: CreateAudienceInput } = {
+        createAudienceInput: {
+          email: formData.email,
+          fullname: `${formData.firstName} ${formData.lastName}`,
+          password: formData.password,
+          role: Role.Audience,
+          username: formData.firstName,
+        },
+      };
+      const result = await mutate({ variables });
+      console.log(result.data);
     } catch (error) {
       console.error(`Error fetching locations: ${error}`);
     }
   };
 
-  const [mutate, { data, loading, error }] = useMutation(gql`
-    mutation CreateAudience($createAudienceInput:${CreateAudienceInput}) {
-      createAudience(){
-          email: "Kers.jnr@gmailaudienceDto:.com"
-          fullname: "Kers"
-          password: "12345678"
-          role: AUDIENCE
-          username: "Lee"
-        }
-    }
-  `); 
-
-  useEffect(() => {}, [formData, pending]);
+  useEffect(() => {
+    setPending(loading);
+    console.log(pending);
+  }, [loading]);
   return (
     <main className="h-screen box-border relative ">
       <div className="grid gap-x-2 lg:grid-cols-2 grid-cols-1 bg-[#322C40] h-full">
@@ -104,39 +121,84 @@ export default function Signup() {
             <form action="">
               <div className="grid gap-y-3">
                 <div className="flex space-x-4 w-full">
-                  <input
-                    type="text"
-                    className="flex-1 rounded-lg focus-visible:outline-[#4d4463] outline-none bg-[#2a2535] p-3 placeholder:text-[#4b4558] text-[#c1bacf]"
-                    placeholder="First Name"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                  />
-                  <input
-                    type="text"
-                    className="flex-1 rounded-lg focus-visible:outline-[#4d4463] outline-none bg-[#2a2535] p-3 placeholder:text-[#4b4558] text-[#c1bacf]"
-                    placeholder="Last Name"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                  />
+                  <div className="flex flex-col space-y-1">
+                    <input
+                      type="text"
+                      className="flex-1 rounded-lg focus-visible:outline-[#4d4463] outline-none bg-[#2a2535] p-3 placeholder:text-[#4b4558] text-[#c1bacf]"
+                      placeholder="First Name"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                    />
+                    <div className="flex flex-col space-y-1">
+                      {errors.errors?.firstName?.map((error, idx) => {
+                        return (
+                          <span className="text-[#beb0db] text-sm" key={idx}>
+                            {error}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex flex-col space-y-1">
+                    <input
+                      type="text"
+                      className="flex-1 rounded-lg focus-visible:outline-[#4d4463] outline-none bg-[#2a2535] p-3 placeholder:text-[#4b4558] text-[#c1bacf]"
+                      placeholder="Last Name"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                    />
+                    <div className="flex flex-col space-y-1">
+                      {errors.errors?.lastName?.map((error, idx) => {
+                        return (
+                          <span className="text-[#beb0db] text-sm" key={idx}>
+                            {error}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  className="flex-1 rounded-lg focus-visible:outline-[#4d4463] outline-none bg-[#2a2535] p-3 placeholder:text-[#4b4558] text-[#c1bacf]"
-                  placeholder="Email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                />
-                <input
-                  type="text"
-                  className="flex-1 rounded-lg focus-visible:outline-[#4d4463] outline-none bg-[#2a2535] p-3 placeholder:text-[#4b4558] text-[#c1bacf]"
-                  placeholder="Enter your password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
+                <div className="flex flex-col space-y-1">
+                  <input
+                    type="text"
+                    className="flex-1 rounded-lg focus-visible:outline-[#4d4463] outline-none bg-[#2a2535] p-3 placeholder:text-[#4b4558] text-[#c1bacf]"
+                    placeholder="Email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                  />
+                  <div className="flex flex-col space-y-1">
+                    {errors.errors?.email?.map((error, idx) => {
+                      return (
+                        <span className="text-[#beb0db] text-sm" key={idx}>
+                          {error}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="flex flex-col space-y-1">
+                  <input
+                    type="text"
+                    className="flex-1 rounded-lg focus-visible:outline-[#4d4463] outline-none bg-[#2a2535] p-3 placeholder:text-[#4b4558] text-[#c1bacf]"
+                    placeholder="Enter your password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                  />
+                  <div className="flex flex-col space-y-1">
+                    {errors.errors?.password?.map((error, idx) => {
+                      return (
+                        <span className="text-[#beb0db] text-sm" key={idx}>
+                          {error}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div className="flex space-x-3">
                   <label
                     htmlFor="check-box"
@@ -184,7 +246,7 @@ export default function Signup() {
                   }}
                   className="bg-purple-600/70 w-full rounded-lg p-3 outline-offset-3"
                 >
-                  {pending ? <CSpinner /> : "Create account"}
+                  {pending ? <Spinner animation="grow" /> : "Create account"}
                 </button>
                 <div className="flex items-center w-full space-x-2">
                   <div className=" h-0 border-t-[1px] border-[#4b4558] flex-1 "></div>
